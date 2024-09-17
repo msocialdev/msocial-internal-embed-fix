@@ -70,12 +70,13 @@
         #bg-cover
         {
             display: none;
-            background-color: #0004;
+            background-color: rgba(0, 0, 0, 0.801);
             position:fixed;
             width:100%;
             height:100%;
             left: 0px;
             top: 0px;
+            z-index: 500;
         }
         #close-popup
         {
@@ -99,7 +100,7 @@
         }
         .fc-event-title
         {
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 700;
             color:black;
             margin:3px;
@@ -159,6 +160,7 @@
             width:100%;
             padding:20px;
             border-top:1px solid #eee;
+            box-sizing: border-box;
         }
         .attributes
         {
@@ -207,6 +209,68 @@
             box-sizing: border-box !important;
             border: 2px solid rgba(0, 110, 255,.3)!important;
         }
+        #add-comment-section
+        {
+            position: absolute;
+            width: 100%;
+            height:100px;
+            bottom:0px;
+            left:0px;
+        }
+        #add-comment
+        {
+            position: absolute;
+            width: 100%;
+            height:100%;
+            bottom:0px;
+            left:0px;
+            font-family: tahoma;
+            font-size: 12px;
+            padding: 15px;
+            box-sizing: border-box;
+            resize: none;
+            background-color: rgba(27, 62, 158, 0.055);
+        }
+        #add-comment-btn
+        {
+            position: absolute;
+            width: 30px;
+            height:30px;
+            font-size: 14px;
+            cursor: pointer;
+            top:5px;
+            right:5px;
+            background-color: rgb(38, 93, 156);
+            color: white;
+            border-radius: 50%;
+            border:none;
+        }
+        #add-comment-btn:hover
+        {
+            background-color: rgb(10, 136, 73);
+        }
+        #comments-container
+        {
+            position: absolute;
+            width: 100%;
+            height:calc(100% - 100px);
+            box-sizing: border-box!important;
+            overflow-y: auto;
+            left: 0px;
+            top: 0px;
+            padding:15px;
+            padding-top: 80px;
+        }
+        .comment
+        {
+            width:calc(100% - 30px);
+            height:auto;
+            font-size: 13px;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(107, 107, 107, 0.164);
+            background-color: #ffffffda;
+        }
     </style>
 </head>
 <body>
@@ -223,7 +287,12 @@
                 <div id="page-blocks"></div>
             </div>
             <div id="page-right">
-
+                <div id="comments-container">
+                </div>
+                <div id="add-comment-section">
+                     <textarea id="add-comment" placeholder="Add a comment"></textarea>
+                     <button id="add-comment-btn"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
             </div>
         </div>
     </div>
