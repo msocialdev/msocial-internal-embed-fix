@@ -102,7 +102,7 @@
         {
             font-size: 12px;
             font-weight: 700;
-            color:black;
+            color:rgb(41, 41, 41);
             margin:3px;
             width:95%;
             height: auto;
@@ -149,11 +149,15 @@
             font-weight: 1000;
             font-family: calibri;
             padding:20px;
+            padding-bottom: 10px;
+            color: #222222;
+            background-color:#c5c5c525;
         }
         #page-status, #page-attributes
         {
             padding:10px;
             padding-left:20px;
+            background-color:#c5c5c525;
         }
         #page-blocks
         {
@@ -161,6 +165,8 @@
             padding:20px;
             border-top:1px solid #eee;
             box-sizing: border-box;
+            font-size: 14px;
+            color: #383838;
         }
         .attributes
         {
@@ -270,7 +276,18 @@
             border-radius: 10px;
             border: 1px solid rgba(107, 107, 107, 0.164);
             background-color: #ffffffda;
+            margin-bottom:15px;
         }
+        .new-comment
+        {
+            animation-name: newCommentAnim;
+            animation-duration: 4s;
+        }
+        @keyframes newCommentAnim {
+            from {background-color: rgba(107, 235, 118, 0.534);}
+            to {background-color: #ffffffda;}
+        }
+
     </style>
 </head>
 <body>
@@ -319,6 +336,10 @@
 
             // Close popup
             document.getElementById('close-popup').addEventListener('click', function() {
+                document.getElementById('notion-popup').style.display = 'none';
+                document.getElementById('bg-cover').style.display = 'none';
+            });
+            document.getElementById('bg-cover').addEventListener('click', function() {
                 document.getElementById('notion-popup').style.display = 'none';
                 document.getElementById('bg-cover').style.display = 'none';
             });
@@ -448,7 +469,37 @@
         }
 
         
-        function IntiateNotionPageLoad(label, value) {
+        // Function to update the page's status using Notion API
+        async function updatePageStatus(pageId, selectedStatusId) {
+            const response = await fetch('https://zu73q7vcrqrbkdwwvvn3nla75e0qtnrb.lambda-url.ap-south-1.on.aws/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    api_endpoint: 'pages/' + pageId,
+                    method: 'PATCH',
+                    body:{
+                        properties: {
+                            [statusFieldName]: {  // Dynamic status field name
+                                status: {
+                                    id: selectedStatusId  // Set the selected status ID
+                                }
+                            }
+                        }
+                    }
+                })
+            });
+
+            if (response.ok) {
+                console.log('Status updated successfully');
+            } else {
+                console.error('Error updating status', response.statusText);
+            }
+        }
+
+
+        function IntiateNotionPageLoad() {
             // Get the page element
             var pageTitle = document.getElementById("page-title");
             var pageStatusContainer = document.getElementById("page-status");
@@ -457,10 +508,11 @@
             pageAttributesContainer.innerHTML  = "";
             const contentDiv = document.getElementById('page-blocks');
             contentDiv.innerHTML = '';
+            document.getElementById('comments-container').innerHTML = '';
 
             pageTitle.innerText = activePageData.properties.Name.title[0]?.text?.content || 'Untitled';
 
-            function AddStatusAttribute()
+            function AddStatusAttribute(label, value)
             {
                 var input;
                 input = document.createElement('select');
@@ -468,7 +520,7 @@
                 // Example options for status
                 statusOptions.forEach(function(option) {
                     var opt = document.createElement('option');
-                    opt.value = option;
+                    opt.value = statusOptionsIDs[statusOptions.indexOf(option)];
                     opt.innerText = option;
                     if (option === value) opt.selected = true;
                     input.appendChild(opt);
@@ -476,7 +528,11 @@
                 
                 if(input)
                 {
-                  pageStatusContainer.appendChild(input);
+                    pageStatusContainer.appendChild(input);
+                    // Listen for the change event to update the status
+                    input.addEventListener('change', function () {
+                        updatePageStatus(activePageData.id, this.value);  // Call the update function
+                    });
                 }
             }
 
@@ -545,6 +601,7 @@
             });
             // Usage
             fetchNotionBlocks(activePageData.id).then(blocks => renderBlocks(blocks)).catch(error => console.error(error));
+            fetchPageComments();
         }
 
         // Fetch blocks from the Notion API
@@ -567,6 +624,61 @@
             console.log(json_response);
             return json_response;
         }
+
+        // Fetch Notion Pages within Date Range
+        async function fetchPageComments() {
+            const response = await fetch('https://zu73q7vcrqrbkdwwvvn3nla75e0qtnrb.lambda-url.ap-south-1.on.aws/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    api_endpoint: 'comments?block_id=' + activePageData.id,
+                    method: 'get'
+                })
+            });
+            const data = await response.json();
+            console.log(activePageData);
+            console.log(data);
+            renderComments(data.results);
+        }
+
+
+        async function createComment() {
+            
+            var comment_content = document.getElementById("add-comment").value.trim();
+            document.getElementById("add-comment").value = "";
+
+            if(comment_content)
+            {
+
+                const response = await fetch('https://zu73q7vcrqrbkdwwvvn3nla75e0qtnrb.lambda-url.ap-south-1.on.aws/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        api_endpoint: 'comments',
+                        method: 'POST',
+                        body:{
+                            parent: { page_id: activePageData.id }, // Page ID where the comment will be posted
+                            rich_text: convertToNotionRichText(comment_content)
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`Error: ${response.status} - ${errorData.message}`);
+                }
+
+                var new_comment = await response.json();
+                appendComment(new_comment);
+            }
+        }
+
+        document.getElementById("add-comment-btn").addEventListener("click", createComment);
+
 
         // Render blocks
         function renderBlocks(blocks) {
@@ -628,11 +740,35 @@
             });
         }
 
+
+        
+        // Render blocks
+        function renderComments(comments) {
+            const contentDiv = document.getElementById('comments-container');
+            contentDiv.innerHTML = '';
+
+            comments.forEach(comment => {
+                let htmlContent = `<div class="comment">${renderRichText(comment.rich_text)}</div>`;
+                // Append the block to the content div
+                contentDiv.innerHTML += htmlContent;
+            });
+            contentDiv.scrollTop = contentDiv.scrollHeight;
+        }
+
+        function appendComment(comment){
+            const contentDiv = document.getElementById('comments-container');
+            let htmlContent = `<div class="comment new-comment">${renderRichText(comment.rich_text)}</div>`;
+            contentDiv.innerHTML += htmlContent;
+            contentDiv.scrollTop = contentDiv.scrollHeight;
+        }
+
+
         // Helper function to render rich text with annotations and links
         function renderRichText(richTextArray) {
             return richTextArray.map(text => {
                 let content = text.text.content;
-
+                // Replace newline characters with <br> to handle line breaks
+                content = content.replace(/\n/g, '<br>');
                 // Handle link if present
                 if (text.href) {
                     content = `<a href="${text.href}">${content}</a>`;
@@ -659,6 +795,28 @@
             }).join('');
         }
 
+        function convertToNotionRichText(textAreaContent) {
+            // Split content by newlines to handle multi-line text
+            // const lines = textAreaContent.split('\n');
+            const lines = [textAreaContent];
+
+            // Map each line into a Notion rich text object
+            const richTextArray = lines.map(line => ({
+                type: 'text',
+                text: {
+                    content: line // The content of the comment
+                },
+                annotations: {
+                    bold: false, // You can modify annotations as needed
+                    italic: false,
+                    underline: false,
+                    strikethrough: false,
+                    code: false
+                }
+            }));
+
+            return richTextArray;
+        }
 
     </script>
 
