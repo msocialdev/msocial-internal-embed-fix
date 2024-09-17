@@ -7,6 +7,7 @@
     
     <!-- FullCalendar CSS CDN -->
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     
     <!-- FullCalendar JS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
@@ -37,14 +38,46 @@
             padding: 20px;
             z-index: 1000;
         }
+        #close-popup
+        {
+            position: absolute;
+            right:20px;
+            top:20px;
+            background-color: transparent;
+            border: none;
+            color:rgb(104, 104, 104);
+            font-size: 45px;
+            cursor: pointer;
+        }
+        #notion-page-content
+        {
+            background:red;
+        }
+        .fc-event-title
+        {
+            font-size: 11px;
+            font-weight: 700;
+            margin:3px;
+        }
+        .fc-event-status
+        {
+            background:green;
+            border: 1px solid #aaa;
+            border-radius: 5px;
+            padding:4px;
+            font-size: 9px;
+            font-weight: 700;
+            margin:3px;
+            display: inline-block;
+        }
     </style>
 </head>
 <body>
 
     <div id="calendar"></div>
     <div id="notion-popup">
-        <button id="close-popup">Close</button>
-        <iframe id="notion-iframe" width="100%" height="90%"></iframe>
+        <button id="close-popup"><i class="fa-solid fa-xmark"></i></button>
+        <div id="notion-page-content" width="90%" height="90%"></div>
     </div>
 
     <script>
@@ -54,6 +87,7 @@
         }
 
         const databaseId = getQueryParam("database_id");
+
         document.addEventListener('DOMContentLoaded', async function() {
             var calendarEl = document.getElementById('calendar');
 
@@ -68,13 +102,29 @@
                     const events = await fetchNotionPages(fetchInfo.startStr, fetchInfo.endStr);
                     successCallback(events);
                 },
+                eventContent: function(arg) {
+                    // Create a custom HTML element to display title and status
+                    const titleEl = document.createElement('div');
+                    titleEl.className = 'fc-event-title';
+                    titleEl.innerHTML = `<strong>${arg.event.title}</strong>`;
+
+                    const newline = document.createElement('br');
+
+                    const statusEl = document.createElement('div');
+                    statusEl.className = 'fc-event-status';
+                    statusEl.innerHTML = `${arg.event.extendedProps.status}`;
+
+                    const arrayOfEls = [titleEl,newline, statusEl];
+                    return { domNodes: arrayOfEls };
+                },
                 eventClick: function(info) {
                     info.jsEvent.preventDefault(); // Don't navigate to the Notion link
                     
                     // Open the Notion page in a popup
                     var popup = document.getElementById('notion-popup');
-                    var iframe = document.getElementById('notion-iframe');
-                    iframe.src = info.event.url; // Load the Notion page
+                    var iframe = document.getElementById('notion-page-content');
+                    // Load the Notion page
+
                     popup.style.display = 'block';
                 }
             });
@@ -110,11 +160,16 @@
                 })
             });
             const data = await response.json();
+            console.log(data);
             return data.results.map(page => ({
                 id: page.id,
                 title: page.properties.Name.title[0].text.content,
                 start: page.properties.Date.date.start,
-                url: `https://notion.so/${page.id.replace(/-/g, '')}` // Link to the Notion page
+                url: `https://notion.so/${page.id.replace(/-/g, '')}`, // Link to the Notion page
+                extendedProps: {
+                    status: page.properties.Status.status.name
+                },
+                data: page
             }));
         }
 
