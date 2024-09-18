@@ -197,6 +197,11 @@
             background-color: rgb(27, 85, 102);
             border-radius: 10px;
             border: none;
+            cursor: pointer;
+        }
+        .status-field option
+        {
+            cursor: pointer;
         }
         .fc-h-event
         {
@@ -277,6 +282,14 @@
             border: 1px solid rgba(107, 107, 107, 0.164);
             background-color: #ffffffda;
             margin-bottom:15px;
+        }
+        .comment-time
+        {
+            width:calc(100% - 30px);
+            height:auto;
+            font-size: 11px;
+            margin-bottom:4px;
+            color:#5e5e5e7a
         }
         .new-comment
         {
@@ -471,6 +484,7 @@
         
         // Function to update the page's status using Notion API
         async function updatePageStatus(pageId, selectedStatusId) {
+            document.querySelector(".status-field").style.backgroundColor = statusColors[statusOptionsIDs.indexOf(selectedStatusId)];
             const response = await fetch('https://zu73q7vcrqrbkdwwvvn3nla75e0qtnrb.lambda-url.ap-south-1.on.aws/', {
                 method: 'POST',
                 headers: {
@@ -523,6 +537,7 @@
                     var opt = document.createElement('option');
                     opt.value = statusOptionsIDs[statusOptions.indexOf(option)];
                     opt.innerText = option;
+                    opt.style.backgroundColor = statusColors[statusOptions.indexOf(option)];
                     if (option === value) opt.selected = true;
                     input.appendChild(opt);
                 });
@@ -530,6 +545,7 @@
                 if(input)
                 {
                     pageStatusContainer.appendChild(input);
+                    document.querySelector(".status-field").style.backgroundColor = statusColors[statusOptions.indexOf(value)];
                     // Listen for the change event to update the status
                     input.addEventListener('change', function () {
                         updatePageStatus(activePageData.id, this.value);  // Call the update function
@@ -749,7 +765,7 @@
             contentDiv.innerHTML = '';
 
             comments.forEach(comment => {
-                let htmlContent = `<div class="comment">${renderRichText(comment.rich_text)}</div>`;
+                let htmlContent = `<div class="comment-time">${convertToLocalDateTime(comment.created_time)}</div><div class="comment">${renderRichText(comment.rich_text)}</div>`;
                 // Append the block to the content div
                 contentDiv.innerHTML += htmlContent;
             });
@@ -758,7 +774,7 @@
 
         function appendComment(comment){
             const contentDiv = document.getElementById('comments-container');
-            let htmlContent = `<div class="comment new-comment">${renderRichText(comment.rich_text)}</div>`;
+            let htmlContent = `<div class="comment-time">${convertToLocalDateTime(comment.created_time)}</div><div class="comment new-comment">${renderRichText(comment.rich_text)}</div>`;
             contentDiv.innerHTML += htmlContent;
             contentDiv.scrollTop = contentDiv.scrollHeight;
         }
@@ -823,6 +839,24 @@
 
 
 <script>
+    function convertToLocalDateTime(isoDateString) {
+        const date = new Date(isoDateString);
+        
+        // Options for date and time format without seconds
+        const options = {
+            year: 'numeric',
+            month: 'long',  // 'short' for abbreviated month names
+            day: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric',
+            hour12: true,  // Use false for 24-hour format
+            timeZoneName: 'short'  // Shows timezone abbreviation
+        };
+        
+        // Format the date into the local system's timezone
+        return date.toLocaleString(undefined, options);
+    }
+
     // Function to interpolate between two colors based on a float value
     function lerpColor(color1, color2, t) {
         // Ensure t is between 0 and 1
