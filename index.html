@@ -493,6 +493,7 @@
 
             if (response.ok) {
                 console.log('Status updated successfully');
+                RenderCalender();
             } else {
                 console.error('Error updating status', response.statusText);
             }
