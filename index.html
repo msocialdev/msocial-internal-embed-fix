@@ -833,7 +833,7 @@
                 }
             } : null;
             // Map each line into a Notion rich text object
-            const richTextArray = lines.map(line => ({
+            const contentRichText  = lines.map(line => ({
                 type: 'text',
                 text: {
                     content: line // The content of the comment
