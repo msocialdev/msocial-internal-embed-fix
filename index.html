@@ -814,6 +814,10 @@
         }
 
         function convertToNotionRichText(textAreaContent) {
+            function capitalizeFirstLetter(str) {
+                if (!str) return str;
+                return str.charAt(0).toUpperCase() + str.slice(1);
+            }
             // Split content by newlines to handle multi-line text
             // const lines = textAreaContent.split('\n');
             const lines = [textAreaContent];
@@ -822,7 +826,7 @@
             const usernameRichText = username ? {
                 type: 'text',
                 text: {
-                    content:"> "+ username +". \n",
+                    content: capitalizeFirstLetter(username) +":\n",
                 },
                 annotations: {
                     bold: true,
