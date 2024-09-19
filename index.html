@@ -335,6 +335,7 @@
         }
 
         const databaseId = getQueryParam("database_id");
+        const username = getQueryParam("username");
         var activePageData = {};
         var statusOptions = [];
         var statusColors = [];
@@ -816,7 +817,21 @@
             // Split content by newlines to handle multi-line text
             // const lines = textAreaContent.split('\n');
             const lines = [textAreaContent];
-
+            // Create a Notion rich text object for the username in bold
+            // Create a Notion rich text object for the username in bold only if username exists
+            const usernameRichText = username ? {
+                type: 'text',
+                text: {
+                    content: username,
+                },
+                annotations: {
+                    bold: true,
+                    italic: false,
+                    underline: false,
+                    strikethrough: false,
+                    code: false
+                }
+            } : null;
             // Map each line into a Notion rich text object
             const richTextArray = lines.map(line => ({
                 type: 'text',
@@ -831,8 +846,8 @@
                     code: false
                 }
             }));
-
-            return richTextArray;
+            // Combine username rich text with the content, if usernameRichText is not null
+            return usernameRichText ? [usernameRichText, ...contentRichText] : contentRichText;
         }
 
     </script>
