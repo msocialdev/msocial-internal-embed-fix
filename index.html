@@ -342,6 +342,7 @@
         var statusOptionsIDs = [];
         var dateFieldName = "Date";
         var statusFieldName = "Status";
+        var titleFiledName = "Creatives";
 
         document.addEventListener('DOMContentLoaded', async function() {
 
@@ -425,7 +426,7 @@
             console.log(data);
             return data.results.map(page => ({
                 id: page.id,
-                title: page.properties.Name.title[0]?.text?.content || 'Untitled',
+                title: page.properties[titleFiledName].title[0]?.text?.content || 'Untitled',
                 start: page.properties[dateFieldName].date.start,
                 url: `https://notion.so/${page.id.replace(/-/g, '')}`, // Link to the Notion page
                 extendedProps: {
@@ -526,7 +527,7 @@
             contentDiv.innerHTML = '';
             document.getElementById('comments-container').innerHTML = '';
 
-            pageTitle.innerText = activePageData.properties.Name.title[0]?.text?.content || 'Untitled';
+            pageTitle.innerText = activePageData.properties[titleFiledName].title[0]?.text?.content || 'Untitled';
 
             function AddStatusAttribute(label, value)
             {
